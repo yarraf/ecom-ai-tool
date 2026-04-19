@@ -1,236 +1,220 @@
-import { useState } from 'react'
-import {
-  Paper, Box, Text, Group, Badge, Button, Skeleton,
-  Stack, ThemeIcon, CopyButton, Divider, ActionIcon, Tooltip,
-} from '@mantine/core'
+import { Skeleton } from '@mantine/core'
+import { CopyButton } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import {
-  IconSparkles, IconCopy, IconCheck, IconCpu,
-  IconFileText, IconRefresh, IconWand,
+  IconFileText, IconCopy, IconCheck, IconRefresh, IconSparkles,
 } from '@tabler/icons-react'
 
-/* ── Loading skeleton ── */
 function LoadingSkeleton() {
   return (
-    <Paper shadow="xs" p="xl" withBorder style={{ borderColor: '#e5e7eb' }}>
-      <Group gap="sm" mb="lg">
-        <Skeleton height={36} width={36} radius="md" />
-        <Box>
-          <Skeleton height={14} width={160} mb={6} />
-          <Skeleton height={11} width={100} />
-        </Box>
-        <Box ml="auto">
-          <Skeleton height={32} width={90} radius="md" />
-        </Box>
-      </Group>
-      <Stack gap="sm">
-        {[95, 80, 100, 70, 88, 60, 75, 45].map((w, i) => (
-          <Skeleton key={i} height={13} width={`${w}%`} radius="sm" />
+    <div style={s.card}>
+      <div style={s.header}>
+        <Skeleton height={11} width={70} radius={3} />
+        <Skeleton height={18} width={52} radius={3} />
+      </div>
+      <div style={{ flex: 1, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[95, 80, 100, 70, 88, 60, 75, 50].map((w, i) => (
+          <Skeleton key={i} height={13} width={`${w}%`} radius={3} />
         ))}
-        <Box mt="xs">
-          {[['•', 72], ['•', 85], ['•', 65]].map(([, w], i) => (
-            <Group key={i} gap="sm" mb={8}>
-              <Skeleton height={8} width={8} circle />
-              <Skeleton height={12} width={`${w}%`} radius="sm" />
-            </Group>
-          ))}
-        </Box>
-      </Stack>
-    </Paper>
+      </div>
+      <div style={s.footer}>
+        <Skeleton height={11} width={60} radius={3} />
+      </div>
+    </div>
   )
 }
 
-/* ── Empty state ── */
 function EmptyState() {
   return (
-    <Paper
-      shadow="xs" p="xl" withBorder
-      style={{ borderColor: '#e5e7eb', borderStyle: 'dashed', background: '#fafbff' }}
-    >
-      <Stack align="center" gap="md" py="xl">
-        <ThemeIcon
-          size={64} radius="xl"
-          variant="gradient"
-          gradient={{ from: '#f3f0ff', to: '#ede9fe', deg: 135 }}
-          style={{ border: '1px solid #ddd6fe' }}
-        >
-          <IconFileText size={28} color="#7c3aed" />
-        </ThemeIcon>
-        <Box ta="center">
-          <Text fw={600} size="md" c="#374151" mb={6}>
-            Prêt à générer
-          </Text>
-          <Text size="sm" c="dimmed" maw={320} mx="auto" lh={1.6}>
-            Renseignez les informations de votre produit dans le formulaire et cliquez sur{' '}
-            <Text component="span" fw={600} c="violet.6">Générer la description</Text>.
-          </Text>
-        </Box>
-        <Group gap="xs" mt="xs">
+    <div style={s.card}>
+      <div style={s.header}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <IconSparkles size={14} stroke={1.8} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Résultat</span>
+        </div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
+        <div style={s.emptyIcon}>
+          <IconFileText size={26} stroke={1.5} color="var(--muted)" />
+        </div>
+        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>Prêt à générer</div>
+        <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65, maxWidth: 280 }}>
+          Renseignez les informations du produit et cliquez sur{' '}
+          <span style={{ fontWeight: 600, color: 'var(--fg)' }}>Générer</span>.
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 18, flexWrap: 'wrap', justifyContent: 'center' }}>
           {['Multilingue', 'SEO-friendly', 'Personnalisable', 'Instant'].map(t => (
-            <Badge key={t} size="sm" variant="light" color="violet" radius="sm">{t}</Badge>
+            <span key={t} style={s.chip}>{t}</span>
           ))}
-        </Group>
-      </Stack>
-    </Paper>
+        </div>
+      </div>
+      <div style={s.footer}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>—</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--muted)' }}>
+          <IconSparkles size={11} stroke={1.8} />
+        </div>
+      </div>
+    </div>
   )
 }
 
-/* ── Markdown-like text renderer ── */
 function RenderDescription({ text }) {
   const lines = text.split('\n')
   const elements = []
 
   lines.forEach((raw, i) => {
     const line = raw.trim()
-    if (!line) { elements.push(<Box key={i} h={6} />); return }
+    if (!line) { elements.push(<div key={i} style={{ height: 6 }} />); return }
 
-    // Bold inline parser
     const parseBold = (str) => str.split(/\*\*(.*?)\*\*/g).map((p, j) =>
-      j % 2 === 1
-        ? <Text key={j} component="span" fw={700} c="#111827">{p}</Text>
-        : p
+      j % 2 === 1 ? <strong key={j}>{p}</strong> : p
     )
 
-    // H2 / H3
     if (line.startsWith('## ')) {
       elements.push(
-        <Text key={i} fw={700} size="md" c="#111827" mt="sm">{parseBold(line.slice(3))}</Text>
+        <div key={i} style={{ fontWeight: 700, fontSize: 15, marginTop: 14, marginBottom: 2 }}>
+          {parseBold(line.slice(3))}
+        </div>
       )
       return
     }
     if (line.startsWith('### ')) {
       elements.push(
-        <Text key={i} fw={600} size="sm" c="#374151" mt="xs">{parseBold(line.slice(4))}</Text>
+        <div key={i} style={{ fontWeight: 600, fontSize: 14, marginTop: 10, marginBottom: 2 }}>
+          {parseBold(line.slice(4))}
+        </div>
       )
       return
     }
 
-    // Bullet
     const bullet = line.match(/^[-•*]\s+(.+)/)
     if (bullet) {
       elements.push(
-        <Group key={i} gap="xs" align="flex-start" pl="xs">
-          <Box mt={7} w={6} h={6} style={{ background: '#7c3aed', borderRadius: '50%', flexShrink: 0 }} />
-          <Text size="sm" c="#374151" lh={1.7} style={{ flex: 1 }}>{parseBold(bullet[1])}</Text>
-        </Group>
+        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', paddingLeft: 6 }}>
+          <span style={{
+            width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)',
+            flexShrink: 0, marginTop: 8,
+          }} />
+          <span style={{ fontSize: 14, lineHeight: 1.75 }}>{parseBold(bullet[1])}</span>
+        </div>
       )
       return
     }
 
-    // Numbered
     const num = line.match(/^(\d+)\.\s+(.+)/)
     if (num) {
       elements.push(
-        <Group key={i} gap="sm" align="flex-start" pl="xs">
-          <ThemeIcon size={20} radius="xl" variant="light" color="violet" style={{ flexShrink: 0, marginTop: 2 }}>
-            <Text size="xs" fw={700}>{num[1]}</Text>
-          </ThemeIcon>
-          <Text size="sm" c="#374151" lh={1.7} style={{ flex: 1 }}>{parseBold(num[2])}</Text>
-        </Group>
+        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', paddingLeft: 6 }}>
+          <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', marginTop: 4, width: 18, flexShrink: 0, textAlign: 'right' }}>
+            {num[1]}.
+          </span>
+          <span style={{ fontSize: 14, lineHeight: 1.75 }}>{parseBold(num[2])}</span>
+        </div>
       )
       return
     }
 
-    // Normal paragraph
     elements.push(
-      <Text key={i} size="sm" c="#374151" lh={1.8}>{parseBold(line)}</Text>
+      <p key={i} style={{ fontSize: 14, lineHeight: 1.75, margin: 0 }}>
+        {parseBold(line)}
+      </p>
     )
   })
 
-  return <Stack gap={4}>{elements}</Stack>
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{elements}</div>
 }
 
-/* ── Main component ── */
 export default function DescriptionResult({ result, isLoading }) {
   if (isLoading) return <LoadingSkeleton />
-  if (!result) return <EmptyState />
+  if (!result)   return <EmptyState />
 
   return (
-    <Paper
-      shadow="xs" p={0} withBorder
-      style={{ borderColor: '#e5e7eb', overflow: 'hidden' }}
-      className="fade-in"
-    >
-      {/* Header */}
-      <Box
-        px="xl" py="md"
-        style={{
-          background: 'linear-gradient(135deg, #7c3aed11 0%, #4f46e511 100%)',
-          borderBottom: '1px solid #ede9fe',
-        }}
-      >
-        <Group justify="space-between">
-          <Group gap="sm">
-            <ThemeIcon size={38} radius="md" variant="gradient" gradient={{ from: 'violet', to: 'indigo' }}>
-              <IconWand size={18} />
-            </ThemeIcon>
-            <Box>
-              <Text fw={700} size="sm" c="#111827">Description générée</Text>
-              {result.tokensUsed && (
-                <Group gap={4} mt={2}>
-                  <IconCpu size={11} color="#9ca3af" />
-                  <Text size="xs" c="dimmed">{result.tokensUsed} tokens</Text>
-                </Group>
-              )}
-            </Box>
-          </Group>
+    <div style={s.card} className="fade-in">
+      <div style={s.header}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <IconSparkles size={14} stroke={1.8} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Résultat</span>
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button style={s.iconBtn} title="Régénérer">
+            <IconRefresh size={13} stroke={1.8} />
+          </button>
+          <CopyButton value={result.description} timeout={2500}>
+            {({ copied, copy }) => (
+              <button
+                style={s.iconBtn}
+                title={copied ? 'Copié !' : 'Copier'}
+                onClick={() => {
+                  copy()
+                  if (!copied) notifications.show({
+                    message: 'Description copiée !',
+                    color: 'teal',
+                    icon: <IconCheck size={14} />,
+                    autoClose: 2000,
+                  })
+                }}
+              >
+                {copied ? <IconCheck size={13} stroke={2} /> : <IconCopy size={13} stroke={1.8} />}
+              </button>
+            )}
+          </CopyButton>
+        </div>
+      </div>
 
-          <Group gap="xs">
-            <Tooltip label="Regénérer" withArrow position="top">
-              <ActionIcon variant="light" color="violet" size="lg" radius="md">
-                <IconRefresh size={16} />
-              </ActionIcon>
-            </Tooltip>
-            <CopyButton value={result.description} timeout={2500}>
-              {({ copied, copy }) => (
-                <Button
-                  size="sm"
-                  variant={copied ? 'filled' : 'light'}
-                  color={copied ? 'teal' : 'violet'}
-                  leftSection={copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-                  onClick={() => {
-                    copy()
-                    if (!copied) {
-                      notifications.show({
-                        title: 'Copié !',
-                        message: 'La description a été copiée dans le presse-papier.',
-                        color: 'teal',
-                        icon: <IconCheck size={16} />,
-                        autoClose: 2500,
-                      })
-                    }
-                  }}
-                  radius="md"
-                >
-                  {copied ? 'Copié !' : 'Copier'}
-                </Button>
-              )}
-            </CopyButton>
-          </Group>
-        </Group>
-      </Box>
-
-      {/* Content */}
-      <Box px="xl" py="lg">
+      <div style={{ padding: '24px 28px 32px', flex: 1, overflowY: 'auto' }}>
         <RenderDescription text={result.description} />
-      </Box>
+      </div>
 
-      {/* Footer */}
-      <Divider color="#f3f4f6" />
-      <Box px="xl" py="sm" style={{ background: '#fafafa' }}>
-        <Group justify="space-between">
-          <Group gap="xs">
-            <Text size="xs" c="dimmed">Modèle :</Text>
-            <Badge size="sm" variant="light" color="violet" radius="sm">
-              {result.model}
-            </Badge>
-          </Group>
-          <Group gap="xs">
-            <IconSparkles size={12} color="#9ca3af" />
-            <Text size="xs" c="dimmed">Généré par OpenRouter</Text>
-          </Group>
-        </Group>
-      </Box>
-    </Paper>
+      <div style={s.footer}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--muted)' }}>
+          {result.language === 'fr' ? 'Français' : result.language === 'ar' ? 'Arabe' : 'English'}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--muted)' }}>
+          <IconSparkles size={11} stroke={1.8} />
+        </div>
+      </div>
+    </div>
   )
+}
+
+const s = {
+  card: {
+    background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10,
+    overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1,
+  },
+  header: {
+    padding: '12px 18px', borderBottom: '1px solid var(--border)',
+    display: 'flex', alignItems: 'center', gap: 8,
+    background: 'var(--bg-2)',
+  },
+  footer: {
+    padding: '12px 24px', borderTop: '1px solid var(--border)',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    background: 'var(--bg-2)',
+  },
+  mono11: { fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', letterSpacing: 1 },
+  emptyIcon: {
+    width: 60, height: 60, borderRadius: '50%',
+    background: 'var(--surface)', border: '1px solid var(--border)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18,
+  },
+  chip: {
+    fontSize: 11, padding: '4px 10px',
+    background: 'var(--surface)', border: '1px solid var(--border)',
+    borderRadius: 20, color: 'var(--muted)',
+  },
+  iconBtn: {
+    width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'transparent', color: 'var(--muted)',
+    border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer',
+  },
+  ghostBtn: {
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '7px 12px', background: 'transparent', color: 'var(--fg)',
+    border: '1px solid var(--border)', borderRadius: 6,
+    fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+  },
+  ghostBtnCopied: {
+    background: 'var(--accent-soft)', color: 'var(--accent-strong)', borderColor: 'var(--accent-soft)',
+  },
 }

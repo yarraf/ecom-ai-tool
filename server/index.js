@@ -17,8 +17,10 @@ app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.vercel.app')) {
       cb(null, true);
+      // console.log(`CORS autorisé : ${origin}`);      
     } else {
       cb(new Error(`CORS bloqué : ${origin}`));
+      // console.warn(`CORS bloqué : ${origin}`);
     }
   },
 }));

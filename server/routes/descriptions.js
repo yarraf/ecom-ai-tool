@@ -79,10 +79,12 @@ Réponds directement avec la description, sans commentaire préliminaire.`;
 
     const generatedDescription = response.data.choices[0].message.content;
 
+    const tokensUsed = response.data.usage?.total_tokens || null;
+
     // Save to DB
     const stmt = db.prepare(`
-      INSERT INTO descriptions (product_name, category, features, target_audience, tone, language, model_used, generated_description)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO descriptions (product_name, category, features, target_audience, tone, language, model_used, generated_description, tokens_used)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const result = stmt.run(
       productName,
@@ -92,14 +94,15 @@ Réponds directement avec la description, sans commentaire préliminaire.`;
       tone || null,
       language || 'fr',
       model,
-      generatedDescription
+      generatedDescription,
+      tokensUsed
     );
 
     res.json({
       id: result.lastInsertRowid,
       description: generatedDescription,
       model,
-      tokensUsed: response.data.usage?.total_tokens || null,
+      tokensUsed,
     });
   } catch (err) {
     console.error('OpenRouter error:', err.response?.data || err.message);
@@ -107,6 +110,30 @@ Réponds directement avec la description, sans commentaire préliminaire.`;
     const message = err.response?.data?.error?.message || 'Erreur lors de la génération.';
     res.status(status).json({ error: message });
   }
+});
+
+// GET stats
+router.get('/stats', (req, res) => {
+  const total = db.prepare('SELECT COUNT(*) as count FROM descriptions').get().count;
+
+  const today = db.prepare(
+    "SELECT COUNT(*) as count FROM descriptions WHERE date(created_at) = date('now')"
+  ).get().count;
+
+  const topLang = db.prepare(`
+    SELECT language, COUNT(*) as count
+    FROM descriptions
+    WHERE language IS NOT NULL
+    GROUP BY language
+    ORDER BY count DESC
+    LIMIT 1
+  `).get();
+
+  res.json({
+    total,
+    today,
+    topLanguage: topLang?.language ?? null,
+  });
 });
 
 // GET history

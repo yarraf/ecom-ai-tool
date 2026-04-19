@@ -11,6 +11,9 @@ export const getModels = () => api.get('/descriptions/models').then(r => r.data)
 export const generateDescription = (payload) =>
   api.post('/descriptions/generate', payload).then(r => r.data);
 
+export const getStats = () =>
+  api.get('/descriptions/stats').then(r => r.data);
+
 export const getHistory = (limit = 20) =>
   api.get(`/descriptions/history?limit=${limit}`).then(r => r.data);
 

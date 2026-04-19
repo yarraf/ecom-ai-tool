@@ -11,11 +11,18 @@ db.exec(`
     features TEXT,
     target_audience TEXT,
     tone TEXT,
-    language TEXT,
+    language TEXT DEFAULT 'fr',
     model_used TEXT,
     generated_description TEXT NOT NULL,
+    tokens_used INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+// Migration : ajouter tokens_used si colonne absente (base existante)
+const cols = db.prepare("PRAGMA table_info(descriptions)").all().map(c => c.name);
+if (!cols.includes('tokens_used')) {
+  db.exec('ALTER TABLE descriptions ADD COLUMN tokens_used INTEGER');
+}
 
 module.exports = db;

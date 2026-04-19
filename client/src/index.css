@@ -1,17 +1,52 @@
 @import '@mantine/core/styles.css';
 @import '@mantine/notifications/styles.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:            oklch(99% 0.003 240);
+  --bg-2:          oklch(98% 0.004 240);
+  --surface:       oklch(97% 0.005 240);
+  --fg:            oklch(22% 0.012 260);
+  --muted:         oklch(58% 0.012 260);
+  --border:        oklch(92% 0.006 240);
+  /* default accent — amber; overridden by [data-accent] */
+  --accent:        oklch(68% 0.14 60);
+  --accent-strong: oklch(55% 0.14 60);
+  --accent-soft:   oklch(96% 0.03 60);
+  --mono:          'JetBrains Mono', ui-monospace, monospace;
+}
+
+[data-accent="forest"]  { --accent: oklch(62% 0.14 155); --accent-strong: oklch(48% 0.14 155); --accent-soft: oklch(95% 0.03 155); }
+[data-accent="cobalt"]  { --accent: oklch(58% 0.14 255); --accent-strong: oklch(45% 0.14 255); --accent-soft: oklch(95% 0.03 255); }
+[data-accent="amber"]   { --accent: oklch(68% 0.14 60);  --accent-strong: oklch(55% 0.14 60);  --accent-soft: oklch(96% 0.03 60);  }
+[data-accent="crimson"] { --accent: oklch(58% 0.14 25);  --accent-strong: oklch(45% 0.14 25);  --accent-soft: oklch(95% 0.03 25);  }
+
+[data-theme="dark"] {
+  --bg:      oklch(18% 0.008 260);
+  --bg-2:    oklch(20% 0.008 260);
+  --surface: oklch(23% 0.010 260);
+  --fg:      oklch(96% 0.005 240);
+  --muted:   oklch(65% 0.010 260);
+  --border:  oklch(28% 0.012 260);
+}
 
 *, *::before, *::after { box-sizing: border-box; }
-
+html, body { margin: 0; padding: 0; height: 100%; }
 body {
-  margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f8fafc;
+  background: var(--bg);
+  color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
+button, input, select, textarea { font-family: inherit; color: inherit; }
+#root { height: 100vh; display: flex; overflow: hidden; }
 
 @keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.fade-in { animation: fadeSlideIn 0.35s ease-out; }
+.fade-in { animation: fadeSlideIn 0.3s ease-out; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
