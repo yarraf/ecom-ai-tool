@@ -1,4 +1,5 @@
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+// En local : charge .env depuis la racine. En production : variables Railway injectées directement.
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), override: false });
 const express = require('express');
 const cors = require('cors');
 

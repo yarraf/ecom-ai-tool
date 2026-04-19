@@ -5,12 +5,15 @@ const db = require('../db/database');
 const router = express.Router();
 
 const OPENROUTER_MODELS = [
-  { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (rapide)' },
-  { id: 'openai/gpt-4o', label: 'GPT-4o (puissant)' },
-  { id: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku (rapide)' },
-  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet' },
-  { id: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5' },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (gratuit)' },
+  { id: 'openai/gpt-4o-mini',                       label: 'GPT-4o Mini (rapide)' },
+  { id: 'openai/gpt-4o',                            label: 'GPT-4o (puissant)' },
+  { id: 'anthropic/claude-3-haiku-20240307',        label: 'Claude 3 Haiku (rapide)' },
+  { id: 'anthropic/claude-3.5-sonnet-20241022',     label: 'Claude 3.5 Sonnet' },
+  { id: 'anthropic/claude-3.5-haiku-20241022',      label: 'Claude 3.5 Haiku' },
+  { id: 'google/gemini-flash-1.5',                  label: 'Gemini Flash 1.5' },
+  { id: 'google/gemini-2.0-flash-001',              label: 'Gemini 2.0 Flash' },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',   label: 'Llama 3.1 8B (gratuit)' },
+  { id: 'mistralai/mistral-7b-instruct:free',       label: 'Mistral 7B (gratuit)' },
 ];
 
 // GET available models
