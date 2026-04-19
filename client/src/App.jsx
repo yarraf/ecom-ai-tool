@@ -256,8 +256,10 @@ export default function App() {
                 /* Mobile: stacked */
                 <>
                   <StatsStrip stats={appStats} isMobile />
-                  <ProductForm key={formKey} onResult={handleResult} isLoading={isLoading} setIsLoading={setIsLoading} />
-                  <DescriptionResult result={result} isLoading={isLoading} />
+                  <div style={{ flexShrink: 0 }}>
+                    <ProductForm key={formKey} onResult={handleResult} isLoading={isLoading} setIsLoading={setIsLoading} />
+                  </div>
+                  <DescriptionResult result={result} isLoading={isLoading} isMobile />
                 </>
               ) : (
                 /* Desktop: two panes */
