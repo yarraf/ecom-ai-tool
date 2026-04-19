@@ -13,6 +13,8 @@ import DescriptionResult from './components/DescriptionResult'
 import History from './components/History'
 import './index.css'
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'dev'
+
 const NAV_ITEMS = [
   { id: 'generator', label: 'Descriptions produits', icon: IconWand, active: true },
   { id: 'history',   label: 'Historique',            icon: IconHistory,  active: true },
@@ -59,7 +61,10 @@ export default function App() {
             </ThemeIcon>
             <Box>
               <Text fw={700} c="white" size="sm" lh={1.2}>E-Commerce AI</Text>
-              <Text size="xs" c="dimmed">powered by OpenRouter</Text>
+              <Group gap={6}>
+                <Text size="xs" c="dimmed">powered by OpenRouter</Text>
+                <Badge size="xs" variant="outline" color="violet" radius="sm">{APP_VERSION}</Badge>
+              </Group>
             </Box>
           </Group>
         </Box>

@@ -29,6 +29,7 @@ jobs:
         run: cd client && npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_APP_VERSION: ${{ github.ref_name }}
 
   # ── Check Backend ──────────────────────────────────────────────
   check-server:
