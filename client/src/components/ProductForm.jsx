@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Skeleton } from '@mantine/core'
-import { IconWand, IconSparkles, IconChevronDown, IconChevronUp } from '@tabler/icons-react'
+import { IconWand, IconSparkles, IconChevronDown, IconChevronUp, IconPhoto } from '@tabler/icons-react'
 import { getModels, generateDescription } from '../api'
 
 
@@ -11,21 +11,22 @@ const CATEGORIES = [
 ]
 
 const FALLBACK_MODELS = [
-  { id: 'openai/gpt-4o-mini',             label: 'GPT-4o mini' },
-  { id: 'anthropic/claude-haiku-20240307', label: 'Claude Haiku 3.5' },
-  { id: 'mistralai/mistral-large',         label: 'Mistral Large' },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (gratuit)' },
+  { id: 'google/gemma-4-27b-it:free',             label: 'Gemma 4 27B (gratuit)'   },
+  { id: 'mistralai/mistral-7b-instruct:free',     label: 'Mistral 7B (gratuit)'    },
 ]
 
 export default function ProductForm({ onResult, isLoading, setIsLoading }) {
   const [models, setModels] = useState([])
   const [showOptions, setShowOptions] = useState(false)
+  const [generateImage, setGenerateImage] = useState(false)
   const [form, setForm] = useState({
     productName: '',
     category: '',
     features: '',
     targetAudience: '',
     language: 'fr',
-    model: 'openai/gpt-4o-mini',
+    model: 'meta-llama/llama-3.3-70b-instruct:free',
     extraInstructions: '',
   })
   const [error, setError] = useState('')
@@ -47,7 +48,7 @@ export default function ProductForm({ onResult, isLoading, setIsLoading }) {
     setIsLoading(true)
     setError('')
     try {
-      onResult(await generateDescription(form))
+      onResult(await generateDescription(form), form, generateImage)
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur de génération. Vérifiez votre clé API.')
     } finally {
@@ -77,6 +78,29 @@ export default function ProductForm({ onResult, isLoading, setIsLoading }) {
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
           />
         </div>
+
+        {/* Image toggle */}
+        <button
+          type="button"
+          onClick={() => setGenerateImage(v => !v)}
+          style={{
+            ...s.toggleBtn,
+            background: generateImage ? 'var(--accent-soft)' : 'var(--surface)',
+            borderColor: generateImage ? 'var(--accent)' : 'var(--border)',
+            color: generateImage ? 'var(--accent-strong)' : 'var(--muted)',
+          }}
+        >
+          <IconPhoto size={13} stroke={1.8} />
+          <span style={{ fontSize: 12, fontWeight: 500 }}>Générer une image</span>
+          <span style={{
+            marginLeft: 'auto', fontSize: 10, fontFamily: 'var(--mono)',
+            padding: '2px 6px', borderRadius: 3,
+            background: generateImage ? 'var(--accent)' : 'var(--border)',
+            color: generateImage ? '#fff' : 'var(--muted)',
+          }}>
+            {generateImage ? 'ON' : 'OFF'}
+          </span>
+        </button>
 
         {/* Submit button — prominent, right after required field */}
         {error && (
@@ -208,6 +232,12 @@ const s = {
     border: '1px solid var(--border)', borderRadius: 5,
     background: 'var(--bg)', color: 'var(--fg)',
     fontSize: 12.5, outline: 'none', boxSizing: 'border-box',
+  },
+  toggleBtn: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    width: '100%', padding: '9px 12px',
+    border: '1px solid', borderRadius: 6, cursor: 'pointer',
+    fontFamily: 'inherit', transition: 'all 0.15s',
   },
   submitBtn: {
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,

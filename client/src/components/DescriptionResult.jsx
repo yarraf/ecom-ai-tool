@@ -2,7 +2,7 @@ import { Skeleton } from '@mantine/core'
 import { CopyButton } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import {
-  IconFileText, IconCopy, IconCheck, IconRefresh, IconSparkles,
+  IconFileText, IconCopy, IconCheck, IconRefresh, IconSparkles, IconPhoto,
 } from '@tabler/icons-react'
 
 function LoadingSkeleton({ isMobile }) {
@@ -126,7 +126,7 @@ function RenderDescription({ text }) {
   return <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{elements}</div>
 }
 
-export default function DescriptionResult({ result, isLoading, isMobile }) {
+export default function DescriptionResult({ result, isLoading, imageLoading, isMobile }) {
   if (isLoading) return <LoadingSkeleton isMobile={isMobile} />
   if (!result)   return <EmptyState isMobile={isMobile} />
 
@@ -142,9 +142,6 @@ export default function DescriptionResult({ result, isLoading, isMobile }) {
           <span style={{ fontSize: 12, fontWeight: 600 }}>Résultat</span>
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
-          <button style={s.iconBtn} title="Régénérer">
-            <IconRefresh size={13} stroke={1.8} />
-          </button>
           <CopyButton value={result.description} timeout={2500}>
             {({ copied, copy }) => (
               <button
@@ -167,7 +164,26 @@ export default function DescriptionResult({ result, isLoading, isMobile }) {
         </div>
       </div>
 
-      <div style={{ padding: '24px 28px 32px', ...(isMobile ? {} : { flex: 1, overflowY: 'auto' }) }}>
+      {/* Image section */}
+      {(imageLoading || result.imageUrl) && (
+        <div style={s.imageSection}>
+          {imageLoading && !result.imageUrl ? (
+            <div style={s.imagePlaceholder}>
+              <div style={s.imageSpinner} />
+              <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10 }}>Génération de l'image…</span>
+            </div>
+          ) : (
+            <img
+              src={result.imageUrl}
+              alt="Produit généré"
+              style={s.productImage}
+              className="fade-in"
+            />
+          )}
+        </div>
+      )}
+
+      <div style={{ padding: '20px 24px 28px', ...(isMobile ? {} : { flex: 1, overflowY: 'auto' }) }}>
         <RenderDescription text={result.description} />
       </div>
 
@@ -213,6 +229,26 @@ const s = {
     width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: 'transparent', color: 'var(--muted)',
     border: '1px solid var(--border)', borderRadius: 4, cursor: 'pointer',
+  },
+  imageSection: {
+    borderBottom: '1px solid var(--border)',
+    background: 'var(--surface)',
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    minHeight: 200,
+  },
+  imagePlaceholder: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    padding: '40px 20px',
+  },
+  imageSpinner: {
+    width: 28, height: 28, borderRadius: '50%',
+    border: '3px solid var(--border)', borderTopColor: 'var(--accent)',
+    animation: 'spin 0.8s linear infinite',
+  },
+  productImage: {
+    width: '100%', maxHeight: 280,
+    objectFit: 'contain', display: 'block',
+    padding: '12px',
   },
   ghostBtn: {
     display: 'flex', alignItems: 'center', gap: 6,

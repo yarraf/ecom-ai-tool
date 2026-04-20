@@ -7,7 +7,7 @@ import {
 import ProductForm from './components/ProductForm'
 import DescriptionResult from './components/DescriptionResult'
 import History from './components/History'
-import { getStats } from './api'
+import { getStats, generateImage } from './api'
 import './index.css'
 
 const APP_VERSION = import.meta.env.VITE_APP_VERSION || 'dev'
@@ -195,7 +195,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [historyKey, setHistoryKey] = useState(0)
   const [formKey, setFormKey]     = useState(0)
-  const [appStats, setAppStats]   = useState(null)
+  const [appStats, setAppStats]     = useState(null)
+  const [imageLoading, setImageLoading] = useState(false)
   const [theme,  setTheme]  = useState(() => localStorage.getItem('theme')  || 'light')
   const [accent, setAccent] = useState(() => localStorage.getItem('accent') || 'amber')
 
@@ -205,8 +206,25 @@ export default function App() {
 
   const toggleTheme    = () => setTheme(t => { const n = t === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', n); return n })
   const handleSetAccent = (a) => { setAccent(a); localStorage.setItem('accent', a) }
-  const handleResult   = (data) => { setResult(data); setHistoryKey(k => k + 1) }
-  const handleNew      = () => { setResult(null); setFormKey(k => k + 1) }
+  const handleResult = async (data, formData, withImage) => {
+    setResult(data)
+    setHistoryKey(k => k + 1)
+    if (!withImage) return
+    setImageLoading(true)
+    try {
+      const imgData = await generateImage({
+        productName:   formData.productName,
+        category:      formData.category,
+        features:      formData.features,
+        descriptionId: data.id,
+      })
+      setResult(prev => ({ ...prev, imageUrl: imgData.imageUrl }))
+    } catch (e) {
+      console.error('[IMAGE frontend] erreur:', e)
+    }
+    setImageLoading(false)
+  }
+  const handleNew = () => { setResult(null); setFormKey(k => k + 1) }
 
   const navProps = { page, onNavigate: setPage, theme, onToggleTheme: toggleTheme, accent, onSetAccent: handleSetAccent }
 
@@ -259,7 +277,7 @@ export default function App() {
                   <div style={{ flexShrink: 0 }}>
                     <ProductForm key={formKey} onResult={handleResult} isLoading={isLoading} setIsLoading={setIsLoading} />
                   </div>
-                  <DescriptionResult result={result} isLoading={isLoading} isMobile />
+                  <DescriptionResult result={result} isLoading={isLoading} imageLoading={imageLoading} isMobile />
                 </>
               ) : (
                 /* Desktop: two panes */
@@ -269,7 +287,7 @@ export default function App() {
                   </div>
                   <div style={s.rightPane}>
                     <StatsStrip stats={appStats} isMobile={false} />
-                    <DescriptionResult result={result} isLoading={isLoading} />
+                    <DescriptionResult result={result} isLoading={isLoading} imageLoading={imageLoading} />
                   </div>
                 </>
               )}

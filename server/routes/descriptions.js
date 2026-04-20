@@ -5,15 +5,18 @@ const db = require('../db/database');
 const router = express.Router();
 
 const OPENROUTER_MODELS = [
-  { id: 'openai/gpt-4o-mini',                       label: 'GPT-4o Mini (rapide)' },
-  { id: 'openai/gpt-4o',                            label: 'GPT-4o (puissant)' },
-  { id: 'anthropic/claude-3-haiku-20240307',        label: 'Claude 3 Haiku (rapide)' },
-  { id: 'anthropic/claude-3.5-sonnet-20241022',     label: 'Claude 3.5 Sonnet' },
-  { id: 'anthropic/claude-3.5-haiku-20241022',      label: 'Claude 3.5 Haiku' },
-  { id: 'google/gemini-flash-1.5',                  label: 'Gemini Flash 1.5' },
-  { id: 'google/gemini-2.0-flash-001',              label: 'Gemini 2.0 Flash' },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',   label: 'Llama 3.1 8B (gratuit)' },
-  { id: 'mistralai/mistral-7b-instruct:free',       label: 'Mistral 7B (gratuit)' },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', label: 'Llama 3.3 70B (gratuit)' },
+  { id: 'google/gemma-3-27b-it:free',             label: 'Gemma 3 27B (gratuit)'   },
+  { id: 'mistralai/mistral-7b-instruct:free',     label: 'Mistral 7B (gratuit)'    },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',  label: 'Llama 3.1 8B (gratuit)'  },
+];
+
+// Fallback chain si le modèle principal est rate-limité
+const FREE_FALLBACK_CHAIN = [
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemma-3-27b-it:free',
+  'mistralai/mistral-7b-instruct:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
 ];
 
 // GET available models
@@ -30,7 +33,7 @@ router.post('/generate', async (req, res) => {
     targetAudience,
     tone,
     language,
-    model = 'openai/gpt-4o-mini',
+    model = 'meta-llama/llama-3.3-70b-instruct:free',
     extraInstructions,
   } = req.body;
 
@@ -58,14 +61,67 @@ Génère une description produit structurée avec :
 
 Réponds directement avec la description, sans commentaire préliminaire.`;
 
+  // Construire la chaîne de fallback : modèle choisi + autres gratuits
+  const chain = [model, ...FREE_FALLBACK_CHAIN.filter(m => m !== model)]
+
+  let lastErr = null
+  for (const currentModel of chain) {
+    try {
+      if (currentModel !== model) console.log(`[FALLBACK] tentative avec ${currentModel}`)
+
+      const response = await axios.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        { model: currentModel, messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 800 },
+        { headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'http://localhost:3001', 'X-Title': 'Ecommerce AI Tool' } }
+      )
+
+      const generatedDescription = response.data.choices[0].message.content
+      const tokensUsed = response.data.usage?.total_tokens || null
+
+      const result = db.prepare(`
+        INSERT INTO descriptions (product_name, category, features, target_audience, tone, language, model_used, generated_description, tokens_used)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(productName, category || null, features || null, targetAudience || null, tone || null, language || 'fr', currentModel, generatedDescription, tokensUsed)
+
+      return res.json({ id: result.lastInsertRowid, description: generatedDescription, model: currentModel, tokensUsed })
+
+    } catch (err) {
+      const status = err.response?.status
+      console.error(`[ERROR] ${currentModel} →`, err.response?.data?.error?.message || err.message)
+      // Si rate limit (429) ou provider error, tenter le suivant
+      if (status === 429 || status === 503 || err.response?.data?.error?.message?.includes('Provider returned error')) {
+        lastErr = err
+        continue
+      }
+      // Autre erreur : arrêter
+      return res.status(status || 500).json({ error: err.response?.data?.error?.message || 'Erreur lors de la génération.' })
+    }
+  }
+
+  res.status(503).json({ error: 'Tous les modèles sont temporairement indisponibles. Réessayez dans quelques instants.' })
+});
+
+// POST generate image
+router.post('/generate-image', async (req, res) => {
+  const { productName, category, features, descriptionId } = req.body;
+  if (!productName) return res.status(400).json({ error: 'Nom du produit requis.' });
+
+  const prompt = [
+    `Professional product photo of ${productName}`,
+    category || null,
+    features  || null,
+    'high quality, commercial photography, clean white background, sharp details',
+  ].filter(Boolean).join(', ');
+
+  console.log('[IMAGE] endpoint atteint');
+  console.log('[IMAGE PROMPT]', prompt);
+
   try {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model,
+        model: 'bytedance-seed/seedream-4.5',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 800,
       },
       {
         headers: {
@@ -77,38 +133,28 @@ Réponds directement avec la description, sans commentaire préliminaire.`;
       }
     );
 
-    const generatedDescription = response.data.choices[0].message.content;
+    console.log('[IMAGE] status HTTP:', response.status);
+    console.log('[IMAGE] réponse brute:', JSON.stringify(response.data, null, 2));
 
-    const tokensUsed = response.data.usage?.total_tokens || null;
+    const message = response.data.choices?.[0]?.message;
+    // Le modèle retourne l'image dans message.images[0].image_url.url (data:image/png;base64,...)
+    const imageUrl =
+      message?.images?.[0]?.image_url?.url ||
+      message?.content ||
+      null;
 
-    // Save to DB
-    const stmt = db.prepare(`
-      INSERT INTO descriptions (product_name, category, features, target_audience, tone, language, model_used, generated_description, tokens_used)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const result = stmt.run(
-      productName,
-      category || null,
-      features || null,
-      targetAudience || null,
-      tone || null,
-      language || 'fr',
-      model,
-      generatedDescription,
-      tokensUsed
-    );
+    console.log('[IMAGE] imageUrl extrait (début):', imageUrl?.substring(0, 80));
 
-    res.json({
-      id: result.lastInsertRowid,
-      description: generatedDescription,
-      model,
-      tokensUsed,
-    });
+    if (descriptionId && imageUrl) {
+      db.prepare('UPDATE descriptions SET image_url = ? WHERE id = ?').run(imageUrl, descriptionId);
+    }
+
+    res.json({ imageUrl });
   } catch (err) {
-    console.error('OpenRouter error:', err.response?.data || err.message);
-    const status = err.response?.status || 500;
-    const message = err.response?.data?.error?.message || 'Erreur lors de la génération.';
-    res.status(status).json({ error: message });
+    console.error('[IMAGE ERROR] status:', err.response?.status);
+    console.error('[IMAGE ERROR] data:', JSON.stringify(err.response?.data, null, 2));
+    console.error('[IMAGE ERROR] message:', err.message);
+    res.status(500).json({ error: "Erreur lors de la génération d'image." });
   }
 });
 

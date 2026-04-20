@@ -24,5 +24,8 @@ const cols = db.prepare("PRAGMA table_info(descriptions)").all().map(c => c.name
 if (!cols.includes('tokens_used')) {
   db.exec('ALTER TABLE descriptions ADD COLUMN tokens_used INTEGER');
 }
+if (!cols.includes('image_url')) {
+  db.exec('ALTER TABLE descriptions ADD COLUMN image_url TEXT');
+}
 
 module.exports = db;

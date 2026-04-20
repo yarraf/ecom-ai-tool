@@ -14,6 +14,9 @@ export const generateDescription = (payload) =>
 export const getStats = () =>
   api.get('/descriptions/stats').then(r => r.data);
 
+export const generateImage = (payload) =>
+  api.post('/descriptions/generate-image', payload).then(r => r.data);
+
 export const getHistory = (limit = 20) =>
   api.get(`/descriptions/history?limit=${limit}`).then(r => r.data);
 
